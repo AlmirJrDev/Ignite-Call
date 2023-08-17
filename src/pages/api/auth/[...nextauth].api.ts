@@ -1,7 +1,13 @@
+import { PrismaAdapter } from "@/lib/auth/prisma-adapter";
+import { NextApiRequest, NextApiResponse } from "next";
 import NextAuth, { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import GoogleProvider, { GoogleProfile } from "next-auth/providers/google";
 
-export const authOptions: NextAuthOptions = {
+export function buildNextAuthOptions(
+  req: NextApiRequest,
+  res: NextApiResponse,
+): NextAuthOptions {
+  return { adapter: PrismaAdapter(req, res),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
@@ -11,6 +17,15 @@ export const authOptions: NextAuthOptions = {
           scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar'
         },
       },
+      profile(profile: GoogleProfile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          username: '',
+          email: profile.email,
+          avartar_url: profile.picture,
+        }
+      }
     }),
   ],
 
@@ -23,8 +38,18 @@ export const authOptions: NextAuthOptions = {
       } 
       
         return true
+    },
+    async session({ session, user})   {
+      return {
+        ...session,
+        user,
+      }
     }
   },
 };
 
-export default NextAuth(authOptions);
+}
+
+export default async function auth(req: NextApiRequest, res: NextApiResponse) {
+  return await NextAuth(req,res, buildNextAuthOptions(req, res))
+}
