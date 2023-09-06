@@ -7,5 +7,10 @@ declare module 'next-auth' {
     email: string
     username: string
     avartar_url: string
-  } 
+  }
+  
+  interface Session {
+    user: User
+  }
 }
+
