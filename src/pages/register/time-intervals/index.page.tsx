@@ -8,6 +8,7 @@ import { getWeekDays } from "@/utils/get-week-days";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { convertTimeStringToMinutes } from "@/utils/convert-time-string-to-minutes";
 import { api } from '../../../lib/axios'
+import { useRouter } from "next/router";
 
 
 const timeIntervalsFormSchema = z.object({
@@ -26,13 +27,13 @@ const timeIntervalsFormSchema = z.object({
         return interval.map(interval => {
             return {
                 weekDay: interval.weekDay,
-                startTimeAndMinutes: convertTimeStringToMinutes(interval.startTime), 
-                endTimeAndMinutes: convertTimeStringToMinutes(interval.endTime),
+                startTimeInMinutes: convertTimeStringToMinutes(interval.startTime), 
+                endTimeInMinutes: convertTimeStringToMinutes(interval.endTime),
             }
         })
     })
     .refine(intervals => {
-        return intervals.every(interval => interval.endTimeAndMinutes - 60 >= interval.startTimeAndMinutes)
+        return intervals.every(interval => interval.endTimeInMinutes - 60 >= interval.startTimeInMinutes)
     },{
         message: 'O horário de término deve ser pelo menos 1h distante do início.'
     }),
@@ -61,6 +62,7 @@ export default function TimeIntervals() {
             ],
           },
         })
+    const router = useRouter()
     
     const weekDays = getWeekDays()
 
@@ -74,6 +76,8 @@ export default function TimeIntervals() {
         await api.post('/users/time-intervals', {
             intervals,
         })
+
+        await router.push('/register/update-profile')
       }
   return (
         <Container>
